@@ -8,7 +8,6 @@ from jsonschema import validate
 import json
 from datetime import datetime
 
-
 class DescarteController(http.Controller):
 
     @http.route('/tpco/odoo/ws002', auth="public", type="json", method=['POST'], csrf=False)
@@ -23,14 +22,19 @@ class DescarteController(http.Controller):
         }
         mensaje_error_existencia_lot = {
             "Token": as_token,
-            "RespCode": -3,
-            "RespMessage": "Rechazado: No existe un lote con ese EPCCode"
+            'fechaOperacion:': datetime.now(),
+            'user': request.env.user.name,
+            'idHandheld': post['params']['idHandheld'],
+            'EPCCode': post['params']['EPCCode'],
+            "RespCode": -1,
+            "RespMessage": "Activo no existente en sistema"
         }
         mensaje_error_existencia = {
             "Token": as_token,
             "RespCode": -3,
             "RespMessage": "Rechazado: Ya existe el registro que pretende crear"
         }
+
 
         try:
             myapikey = request.httprequest.headers.get("Authorization")
@@ -47,26 +51,24 @@ class DescarteController(http.Controller):
 
                 stock_scrap = request.env['stock.scrap']
                 stock_production_lot = request.env['stock.production.lot']
-                obj_stock_production_lot = stock_production_lot.sudo().search([('name', '=', post['EPCCode'])])
+                obj_stock_production_lot = stock_production_lot.sudo().search([('name', '=', post['params']['EPCCode'])])
                 if obj_stock_production_lot:
                     obj_stock_scrap = stock_scrap.sudo().search([('lot_id', '=', obj_stock_production_lot.id)])
                     if not obj_stock_scrap:
-                        obj_scrap = obj_stock_scrap.sudo().create({'lot_id': obj_stock_production_lot.id,
-                                                                   'product_id': obj_stock_production_lot.product_id.id,
-                                                                   'product_uom_id': 1, 'date_done': datetime.now()})
+                        obj_scrap = obj_stock_scrap.sudo().create({'lot_id':  obj_stock_production_lot.id,'product_id':obj_stock_production_lot.product_id.id,'product_uom_id':1,'date_done':datetime.now()})
                         mensaje_correcto = {
                             "Token": as_token,
                             'idDescarte': obj_scrap.id,
                             'fechaOperacion:': obj_scrap.create_date,
-                            'user': request.env.user,
-                            'idHandheld': post['idHandheld'],
-                            'EPCCode': post['EPCCode'],
+                            'user': request.env.user.name,
+                            'idHandheld': post['params']['idHandheld'],
+                            'EPCCode': post['params']['EPCCode'],
                             'codigo': 0,
                             'mensaje': "Activo descartado de inventario"
                         }
                         return mensaje_correcto
                     else:
-                        return mensaje_error_existencia
+                       return mensaje_error_existencia
                 else:
                     return mensaje_error_existencia_lot
 
