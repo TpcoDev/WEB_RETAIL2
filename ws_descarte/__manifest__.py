@@ -10,7 +10,7 @@
 
     # any module necessary for this one to work correctly
 
-    'depends': ['stock'],
+    'depends': ['stock', 'ws_enrolamiento'],
 
     # always loaded
     'data': [
