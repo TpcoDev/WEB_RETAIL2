@@ -81,7 +81,7 @@ class EnrolamientoController(http.Controller):
                         obj_tamanno = tamanno.sudo().create(
                             {'name': detalle['tamanno']})
 
-                    obj_origen = tipo_prenda.sudo().search(
+                    obj_origen = origen.sudo().search(
                         [('name', '=', detalle['origen'])], limit=1)
                     if not obj_origen:
                         obj_origen = origen.sudo().create({'name': detalle['origen']})
