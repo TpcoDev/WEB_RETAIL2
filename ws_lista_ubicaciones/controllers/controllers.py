@@ -11,7 +11,7 @@ import json
 class ListaUbicacionesController(http.Controller):
 
     @http.route('/tpco/odoo/ws006', auth="public", type="json", method=['POST'], csrf=False)
-    def enrolamiento(self, **post):
+    def lista_ubicaciones(self, **post):
 
         post = json.loads(request.httprequest.data)
         res = {}
@@ -30,7 +30,20 @@ class ListaUbicacionesController(http.Controller):
             if user_id:
                 res['token'] = as_token
 
-                
+                stock_location = request.env['stock.location']
+                objs_stock_location = stock_location.search([])
+                detalleubicaciones = []
+                ubicacion_padre = ""
+                for obj in objs_stock_location:
+                    if obj.location_id.name:
+                        ubicacion_padre = obj.location_id.name
+
+                    detalleubicaciones.append({'ubicacionPadre':ubicacion_padre,'ubicacion':obj.name})
+
+                return {
+                    "user":post['user'],
+                    "detalleUbicaciones":detalleubicaciones
+                }
 
         except Exception as e:
             mensaje_error = {
