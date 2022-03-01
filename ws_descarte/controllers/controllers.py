@@ -8,7 +8,6 @@ from jsonschema import validate
 import json
 from datetime import datetime
 
-class DescarteController(http.Controller):
 
 class DescarteController(http.Controller):
 
@@ -37,7 +36,6 @@ class DescarteController(http.Controller):
             "RespMessage": "Rechazado: Ya existe el registro que pretende crear"
         }
 
-
         try:
             myapikey = request.httprequest.headers.get("Authorization")
             if not myapikey:
@@ -51,118 +49,31 @@ class DescarteController(http.Controller):
             if user_id:
                 res['token'] = as_token
 
-                product_tmpl = request.env['product.template']
-                production_lot = request.env['stock.production.lot']
-                tipo_prenda = request.env['tipo.prenda']
-                marca = request.env['marca']
-                tamanno = request.env['tamanno']
-                origen = request.env['origen']
-                color = request.env['color']
-                genero = request.env['genero']
-
-                location_parent_id = request.env['stock.location'].search(
-                    [('name', '=', post['params']['ubicacionPadre'])], limit=1)
-                location_id = request.env['stock.location'].sudo().search([('name', '=', post['params']['ubicacion'])],
-                                                                          limit=1)
-
-                if location_parent_id:
-                    location_id = request.env['stock.location'].sudo().search(
-                        [('name', '=', post['params']['ubicacion']), ('location_id', '=', location_parent_id.id)],
-                        limit=1)
-
-                for detalle in post['params']['detalleActivos']:
-                    obj_tipo_prenda = tipo_prenda.sudo().search(
-                        [('name', '=', detalle['tipoPrenda'])], limit=1)
-                    if not obj_tipo_prenda:
-                        obj_tipo_prenda = tipo_prenda.sudo().create(
-                            {'name': detalle['tipoPrenda']})
-
-                    obj_marca = marca.sudo().search([('name', '=', detalle['marca'])], limit=1)
-                    if not obj_marca:
-                        obj_marca = marca.sudo().create({'name': detalle['marca']})
-
-                    obj_tamanno = tamanno.sudo().search(
-                        [('name', '=', detalle['tamanno'])], limit=1)
-                    if not obj_tamanno:
-                        obj_tamanno = tamanno.sudo().create(
-                            {'name': detalle['tamanno']})
-
-                    obj_origen = origen.sudo().search(
-                        [('name', '=', detalle['origen'])], limit=1)
-                    if not obj_origen:
-                        obj_origen = origen.sudo().create({'name': detalle['origen']})
-
-                    obj_color = color.sudo().search([('name', '=', detalle['color'])], limit=1)
-                    if not obj_color:
-                        obj_color = color.sudo().create({'name': detalle['color']})
-
-                    obj_genero = genero.sudo().search(
-                        [('name', '=', detalle['genero'])], limit=1)
-                    if not obj_genero:
-                        obj_genero = genero.sudo().create({'name': detalle['genero']})
-
-                    product_tmpl_nuevo = product_tmpl.search([('default_code', '=', detalle['SKU'])], limit=1)
-                    if not product_tmpl_nuevo:
-
-                        product_tmpl_nuevo = product_tmpl.sudo().create({
-                            'name': detalle['nombreActivo'],
-                            'default_code': detalle['SKU'],
-                            'tipo_prenda_id': obj_tipo_prenda.id,
-                            'marca_id': obj_marca.id,
-                            'tamanno_id': obj_tamanno.id,
-                            'origen_id': obj_origen.id,
-                            'color_id': obj_color.id,
-                            'genero_id': obj_genero.id,
-                            'list_price': 1.00,
-                            'standard_price': 0.00,
-                            'use_expiration_date': False,
-                            'tracking': 'serial',
-                            'purchase_ok': True,
-                            'sale_ok': True,
-                            'type': 'product'
-
-                        })
-                        request.env.cr.commit()
-
-                        for epc in detalle['DetalleEpc']:
-                            production_lot_nuevo = production_lot.sudo().search([('name', '=', epc['EPCCode'])],
-                                                                                limit=1)
-                            if not production_lot_nuevo:
-                                production_lot_nuevo = production_lot.sudo().create({
-                                    'product_id': product_tmpl_nuevo.id,
-                                    'name': epc['EPCCode'],
-                                    'company_id': request.env.user.company_id.id,
-                                })
-
-                            else:
-                                return mensaje_error_existencia
-                            quant_id = request.env['stock.quant'].sudo().create({
-                                'product_id': product_tmpl_nuevo.id,
-                                'location_id': location_id.id,
-                                'inventory_quantity': 1.0,
-                                'quantity': 1.0,
-                            })
-
-                            quant_id.write({'lot_id': production_lot_nuevo.id})
-
+                stock_scrap = request.env['stock.scrap']
+                stock_production_lot = request.env['stock.production.lot']
+                obj_stock_production_lot = stock_production_lot.sudo().search(
+                    [('name', '=', post['params']['EPCCode'])])
+                if obj_stock_production_lot:
+                    obj_stock_scrap = stock_scrap.sudo().search([('lot_id', '=', obj_stock_production_lot.id)])
+                    if not obj_stock_scrap:
+                        obj_scrap = obj_stock_scrap.sudo().create({'lot_id': obj_stock_production_lot.id,
+                                                                   'product_id': obj_stock_production_lot.product_id.id,
+                                                                   'product_uom_id': 1, 'date_done': datetime.now()})
+                        mensaje_correcto = {
+                            "Token": as_token,
+                            'idDescarte': obj_scrap.id,
+                            'fechaOperacion:': obj_scrap.create_date,
+                            'user': request.env.user.name,
+                            'idHandheld': post['params']['idHandheld'],
+                            'EPCCode': post['params']['EPCCode'],
+                            'codigo': 0,
+                            'mensaje': "Activo descartado de inventario"
+                        }
                         return mensaje_correcto
                     else:
-                        product_tmpl_nuevo.write({
-                            'name': detalle['nombreActivo'],
-                            'tipo_prenda_id': obj_tipo_prenda.id,
-                            'marca_id': obj_marca.id,
-                            'tamanno_id': obj_tamanno.id,
-                            'origen_id': obj_origen.id,
-                            'color_id': obj_color.id,
-                            'genero_id': obj_genero.id,
-                            'list_price': 1.00,
-                            'standard_price': 0.00,
-                            'use_expiration_date': False,
-                            'tracking': 'serial',
-                            'purchase_ok': True,
-                            'sale_ok': True,
-                            'type': 'product'
-                        })
+                        return mensaje_error_existencia
+                else:
+                    return mensaje_error_existencia_lot
 
 
 
