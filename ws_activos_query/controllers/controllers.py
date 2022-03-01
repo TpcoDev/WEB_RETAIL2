@@ -23,7 +23,7 @@ from datetime import timedelta, datetime, date
 
 class OdooController(http.Controller):
 
-    @http.route('/tpco/odoo/activo/query', auth="public", type="json", method=['POST'], csrf=False)
+    @http.route('/tpco/odoo/ws003', auth="public", type="json", method=['POST'], csrf=False)
     def activo_query(self, **post):
 
         post = json.loads(request.httprequest.data)

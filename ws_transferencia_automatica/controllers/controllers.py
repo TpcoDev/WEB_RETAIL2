@@ -17,7 +17,12 @@ class TransferenciaAutomaticaController(http.Controller):
         post = json.loads(request.httprequest.data)
         res = {}
         as_token = uuid.uuid4().hex
-       
+
+        mensaje_error = {
+            "Token": as_token,
+            "RespCode": -1,
+            "RespMessage": "Error de conexión"
+        }
 
         try:
             myapikey = request.httprequest.headers.get("Authorization")
@@ -35,9 +40,10 @@ class TransferenciaAutomaticaController(http.Controller):
                 stock_picking_type = request.env['stock.picking.type']
                 production_lot = request.env['stock.production.lot']
 
-
-                stock_picking_type_obj = stock_picking_type.sudo().search([('name', '=', 'Internal Transfers')], limit=1)
-                location_parent_id = request.env['stock.location'].search([('name', '=', post['ubicacionPadre'])], limit=1)
+                stock_picking_type_obj = stock_picking_type.sudo().search([('name', '=', 'Internal Transfers')],
+                                                                          limit=1)
+                location_parent_id = request.env['stock.location'].search([('name', '=', post['ubicacionPadre'])],
+                                                                          limit=1)
                 location_id = request.env['stock.location'].sudo().search([('name', '=', post['ubicacion'])], limit=1)
                 detalleActivos = []
 
@@ -58,15 +64,13 @@ class TransferenciaAutomaticaController(http.Controller):
                     })
 
                 return {
-                         "idTransferencia": stock_picking_nuevo.id,
-                         "fechaOperacion": datetime.datetime.now(),
-                         "ubicacionPadre": location_parent_id.name,
-                         "ubicacion": location_id.name,
-                         "user": post['user'],
-                         "detalleActivos": detalleActivos
-                        }
-
-
+                    "idTransferencia": stock_picking_nuevo.id,
+                    "fechaOperacion": datetime.datetime.now(),
+                    "ubicacionPadre": location_parent_id.name,
+                    "ubicacion": location_id.name,
+                    "user": post['user'],
+                    "detalleActivos": detalleActivos
+                }
 
 
         except Exception as e:

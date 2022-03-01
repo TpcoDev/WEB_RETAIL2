@@ -16,7 +16,12 @@ class ListaUbicacionesController(http.Controller):
         post = json.loads(request.httprequest.data)
         res = {}
         as_token = uuid.uuid4().hex
-       
+
+        mensaje_error = {
+            "Token": as_token,
+            "RespCode": -1,
+            "RespMessage": "Error de conexión"
+        }
 
         try:
             myapikey = request.httprequest.headers.get("Authorization")
@@ -38,11 +43,11 @@ class ListaUbicacionesController(http.Controller):
                     if obj.location_id.name:
                         ubicacion_padre = obj.location_id.name
 
-                    detalleubicaciones.append({'ubicacionPadre':ubicacion_padre,'ubicacion':obj.name})
+                    detalleubicaciones.append({'ubicacionPadre': ubicacion_padre, 'ubicacion': obj.name})
 
                 return {
-                    "user":post['user'],
-                    "detalleUbicaciones":detalleubicaciones
+                    "user": post['user'],
+                    "detalleUbicaciones": detalleubicaciones
                 }
 
         except Exception as e:

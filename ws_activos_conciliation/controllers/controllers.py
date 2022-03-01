@@ -5,7 +5,7 @@ import json
 
 class OdooController(http.Controller):
 
-    @http.route('/tpco/odoo/activos/conciliation', auth="public", type="json", method=['POST'], csrf=False)
+    @http.route('/tpco/odoo/ws005', auth="public", type="json", method=['POST'], csrf=False)
     def activo_conciliation(self, **post):
         post = json.loads(http.request.httprequest.data)
         product_tmpl = http.request.env['product.template']
