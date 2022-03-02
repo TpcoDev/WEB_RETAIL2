@@ -70,28 +70,68 @@ class OdooController(http.Controller):
                 domain = []
                 location_parent_id = None
                 location_id = None
-                if not post['ubicacion'] == 'todos':
-                    location_parent_id = request.env['stock.location'].sudo().search(
-                        [('name', '=', post['ubicacionPadre'])], limit=1)
-                    location_id = request.env['stock.location'].sudo().search([('name', '=', post['ubicacion'])],
-                                                                              limit=1)
-                    if location_parent_id:
-                        location_id = request.env['stock.location'].sudo().search(
-                            [('name', '=', post['ubicacion']), ('location_id', '=', location_parent_id.id)],
-                            limit=1)
-                    domain.append(('location_id', '=', location_id.id))
 
-                quants = request.env['stock.quant'].sudo().search(domain)
+                location_parent_id = request.env['stock.location'].sudo().search(
+                    [('name', '=', post['ubicacionPadre'])], limit=1)
+                location_id = request.env['stock.location'].sudo().search([('name', '=', post['ubicacion'])],
+                                                                          limit=1)
+                if location_parent_id:
+                    location_id = request.env['stock.location'].sudo().search(
+                        [('name', '=', post['ubicacion']), ('location_id', '=', location_parent_id.id)],
+                        limit=1)
 
-                for quant in quants:
-                    product_id = quant.product_id
-                    lot = quant.lot_id
+                quants = request.env['stock.quant'].sudo().search([])
 
+                epcodes = []
+                for detalle in post['detalleActivos']:
+                    epcodes.append(detalle['EPCCode'])
+
+                epc_activo_existe = []
+                epc_activo_faltante = []
+                epc_activo_sobrante = []
+                epc_activo_no_esta = []
+
+                # Fill list exixsts
+                for code in epcodes:
+                    quant_exists = quants.filtered(lambda x: x.lot_id.name == code and x.location_id.id == location_id.id).mapped(
+                        'lot_id.name')
+                    quant_faltantes = quants.filtered(lambda x: x.lot_id.name == code and x.location_id.id != location_id.id).mapped('lot_id.name')
+                    quant_not_exists = quants.filtered(lambda x: x.lot_id.name == code)
+
+                    if len(quant_exists):
+                        epc_activo_existe.append(quant_exists[0])
+                    if len(quant_faltantes):
+                        epc_activo_faltante.append(quant_faltantes[0])
+                    if not len(quant_not_exists):
+                        epc_activo_no_esta.append(code)
+
+                epc_activo_sobrante = request.env['stock.quant'].sudo().search([('lot_id.name', 'not in', epcodes)]).mapped('lot_id.name')
+
+
+                for item in epc_activo_existe:
                     vals['detalleActivos'].append({
-                        'EPCCode': lot.name if lot else '',
-                        'codigo': MESSAGES.keys(),
-                        'mensaje': MESSAGES.keys(),
+                        'EPCCode': item,
+                        'codigo': '0',
+                        'mensaje': MESSAGES['0'],
+                    })
 
+                for item in epc_activo_faltante:
+                    vals['detalleActivos'].append({
+                        'EPCCode': item,
+                        'codigo': '1',
+                        'mensaje': MESSAGES['1'],
+                    })
+                for item in epc_activo_sobrante:
+                    vals['detalleActivos'].append({
+                        'EPCCode': item,
+                        'codigo': '2',
+                        'mensaje': MESSAGES['2'],
+                    })
+                for item in epc_activo_no_esta:
+                    vals['detalleActivos'].append({
+                        'EPCCode': item,
+                        'codigo': '9',
+                        'mensaje': MESSAGES['9'],
                     })
 
                 return vals
