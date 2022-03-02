@@ -10,7 +10,7 @@
 
     # any module necessary for this one to work correctly
 
-    'depends': ['product'],
+    'depends': ['stock'],
 
     # always loaded
     'data': [

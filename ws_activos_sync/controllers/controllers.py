@@ -70,7 +70,7 @@ class OdooController(http.Controller):
                             limit=1)
                     domain.append(('location_id', '=', location_id.id))
 
-                quants = request.env['stock.quant'].sudo().search([])
+                quants = request.env['stock.quant'].sudo().search(domain)
 
                 for quant in quants:
                     product_id = quant.product_id
