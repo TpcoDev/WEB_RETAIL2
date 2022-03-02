@@ -56,15 +56,21 @@ class OdooController(http.Controller):
                     'detalleActivos': []
                 }
 
-                location_parent_id = request.env['stock.location'].sudo().search(
-                    [('name', '=', post['ubicacionPadre'])], limit=1)
-                location_id = request.env['stock.location'].sudo().search([('name', '=', post['ubicacion'])], limit=1)
-                if location_parent_id:
-                    location_id = request.env['stock.location'].sudo().search(
-                        [('name', '=', post['ubicacion']), ('location_id', '=', location_parent_id.id)],
-                        limit=1)
+                domain = []
+                location_parent_id = None
+                location_id = None
+                if not post['ubicacion'] == 'todos':
+                    location_parent_id = request.env['stock.location'].sudo().search(
+                        [('name', '=', post['ubicacionPadre'])], limit=1)
+                    location_id = request.env['stock.location'].sudo().search([('name', '=', post['ubicacion'])],
+                                                                              limit=1)
+                    if location_parent_id:
+                        location_id = request.env['stock.location'].sudo().search(
+                            [('name', '=', post['ubicacion']), ('location_id', '=', location_parent_id.id)],
+                            limit=1)
+                    domain.append(('location_id', '=', location_id.id))
 
-                quants = request.env['stock.quant'].sudo().search([('location_id', '=', location_id.id)])
+                quants = request.env['stock.quant'].sudo().search([])
 
                 for quant in quants:
                     product_id = quant.product_id
@@ -80,8 +86,8 @@ class OdooController(http.Controller):
                         'origen': product_id.origen_id.name,
                         'color': product_id.color_id.name,
                         'genero': product_id.genero_id.name,
-                        'ubicacionPadre': location_parent_id.name,
-                        'ubicacion': location_id.name,
+                        'ubicacionPadre': location_parent_id.name if location_parent_id else '',
+                        'ubicacion': location_id.name if location_id else '',
                     })
 
                 return vals
