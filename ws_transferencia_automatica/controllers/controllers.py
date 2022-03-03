@@ -18,12 +18,6 @@ class TransferenciaAutomaticaController(http.Controller):
         res = {}
         as_token = uuid.uuid4().hex
 
-        mensaje_error = {
-            "Token": as_token,
-            "RespCode": -1,
-            "RespMessage": "Error de conexión"
-        }
-
         try:
             myapikey = request.httprequest.headers.get("Authorization")
             if not myapikey:
@@ -39,38 +33,63 @@ class TransferenciaAutomaticaController(http.Controller):
                 stock_picking = request.env['stock.picking']
                 stock_picking_type = request.env['stock.picking.type']
                 production_lot = request.env['stock.production.lot']
+                stock_move = request.env['stock.move']
 
-                stock_picking_type_obj = stock_picking_type.sudo().search([('name', '=', 'Internal Transfers')],
+                stock_picking_type_obj = stock_picking_type.sudo().search([('sequence_code', '=', 'INT')], limit=1)
+                location_parent_id = request.env['stock.location'].search(
+                    [('name', '=', post['params']['ubicacionPadre'])], limit=1)
+                location_id = request.env['stock.location'].sudo().search([('name', '=', post['params']['ubicacion'])],
                                                                           limit=1)
-                location_parent_id = request.env['stock.location'].search([('name', '=', post['ubicacionPadre'])],
-                                                                          limit=1)
-                location_id = request.env['stock.location'].sudo().search([('name', '=', post['ubicacion'])], limit=1)
                 detalleActivos = []
-
-                for detalle in post['detalleActivos']:
+                for detalle in post['params']['detalleActivos']:
                     production_lot_obj = production_lot.sudo().search([('name', '=', detalle['EPCCode'])], limit=1)
-                    producto_id = production_lot_obj.product_id
-                    stock_picking_nuevo = stock_picking.sudo().create({
-                        'product_id': producto_id.id,
-                        'picking_type_id': stock_picking_type_obj.id,
-                        'location_id': location_parent_id.id,
-                        'location_dest_id': location_id.id,
-                    })
-                    request.env.cr.commit()
-                    detalleActivos.append({
-                        "EPCCode": detalle['EPCCode'],
-                        "codigo": 0,
-                        "mensaje": "Activo transferido"
-                    })
+                    if production_lot_obj:
+                        producto_id = production_lot_obj.product_id
+                        stock_picking_nuevo = stock_picking.sudo().create({
+                            'product_id': producto_id.id,
+                            'picking_type_id': stock_picking_type_obj.id,
+                            'location_id': location_parent_id.id,
+                            'location_dest_id': location_id.id,
+                        })
+                        request.env.cr.commit()
+                        stock_move.create({
+                            'picking_id':stock_picking_nuevo.id,
+                            'name': producto_id.name,
+                            'product_id': producto_id.id,
+                            'description_picking': producto_id.name,
+                            'quantity_done': 1,
+                            'lot_ids': [production_lot_obj.id],
+                            'product_uom':1,
+                            'location_id':location_parent_id.id,
+                            'location_dest_id':location_id.id,
+                            'date':datetime.datetime.now(),
+                            'company_id':1,
+                            'product_uom_qty':1,
+                        })
+                        request.env.cr.commit()
+
+                        detalleActivos.append({
+                            "EPCCode": detalle['EPCCode'],
+                            "codigo": 0,
+                            "mensaje": "Activo transferido"
+                        })
+                    else:
+                        detalleActivos.append({
+                            "EPCCode": detalle['EPCCode'],
+                            "codigo": 0,
+                            "mensaje": "No se pudo transferir, Activo no esta en el sistema"
+                        })
 
                 return {
                     "idTransferencia": stock_picking_nuevo.id,
                     "fechaOperacion": datetime.datetime.now(),
                     "ubicacionPadre": location_parent_id.name,
                     "ubicacion": location_id.name,
-                    "user": post['user'],
+                    "user": post['params']['user'],
                     "detalleActivos": detalleActivos
                 }
+
+
 
 
         except Exception as e:
