@@ -105,8 +105,8 @@ class OdooController(http.Controller):
                     if not len(quant_not_exists):
                         epc_activo_no_esta.append(code)
 
-                epc_activo_sobrante = request.env['stock.quant'].sudo().search([('lot_id.name', 'not in', epcodes), ('location_id', '=', location_id.id)]).mapped('lot_id.name')
-
+                epc_activo_sobrante = request.env['stock.quant'].sudo().search([('lot_id.name', 'not in', epcodes), ('location_id', '=', location_id.id)])
+                epc_activo_sobrante = epc_activo_sobrante.filtered(lambda x: x.available_quantity > 0).mapped('lot_id.name')
 
                 for item in epc_activo_existe:
                     vals['detalleActivos'].append({
