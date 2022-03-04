@@ -34,6 +34,7 @@ class TransferenciaAutomaticaController(http.Controller):
                 stock_picking_type = request.env['stock.picking.type']
                 production_lot = request.env['stock.production.lot']
                 stock_move = request.env['stock.move']
+                stock_quant = request.env['stock.quant']
 
                 stock_picking_type_obj = stock_picking_type.sudo().search([('sequence_code', '=', 'INT')], limit=1)
                 location_parent_id = request.env['stock.location'].search(
@@ -43,6 +44,7 @@ class TransferenciaAutomaticaController(http.Controller):
                 detalleActivos = []
                 for detalle in post['params']['detalleActivos']:
                     production_lot_obj = production_lot.sudo().search([('name', '=', detalle['EPCCode'])], limit=1)
+                    obj_stock_quant = stock_quant.sudo().search([('lot_id', '=', production_lot_obj.id)])
                     if production_lot_obj:
                         producto_id = production_lot_obj.product_id
                         stock_picking_nuevo = stock_picking.sudo().create({
@@ -60,13 +62,15 @@ class TransferenciaAutomaticaController(http.Controller):
                             'quantity_done': 1,
                             'lot_ids': [production_lot_obj.id],
                             'product_uom':1,
-                            'location_id':location_parent_id.id,
+                            'location_id':obj_stock_quant.location_id.id,
                             'location_dest_id':location_id.id,
                             'date':datetime.datetime.now(),
                             'company_id':1,
                             'product_uom_qty':1,
                         })
                         request.env.cr.commit()
+                        stock_picking_nuevo.action_confirm()
+                        stock_picking_nuevo.button_validate()
 
                         detalleActivos.append({
                             "EPCCode": detalle['EPCCode'],

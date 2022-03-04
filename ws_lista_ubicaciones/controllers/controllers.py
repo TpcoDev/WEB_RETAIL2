@@ -31,7 +31,7 @@ class ListaUbicacionesController(http.Controller):
                 res['token'] = as_token
 
                 stock_location = request.env['stock.location']
-                objs_stock_location = stock_location.search([])
+                objs_stock_location = stock_location.search([('usage',"=",'internal')])
                 detalleubicaciones = []
                 ubicacion_padre = ""
                 for obj in objs_stock_location:

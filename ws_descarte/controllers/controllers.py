@@ -8,7 +8,6 @@ from jsonschema import validate
 import json
 from datetime import datetime
 
-
 class DescarteController(http.Controller):
 
     @http.route('/tpco/odoo/ws002', auth="public", type="json", method=['POST'], csrf=False)
@@ -36,6 +35,7 @@ class DescarteController(http.Controller):
             "RespMessage": "Rechazado: Ya existe el registro que pretende crear"
         }
 
+
         try:
             myapikey = request.httprequest.headers.get("Authorization")
             if not myapikey:
@@ -51,14 +51,19 @@ class DescarteController(http.Controller):
 
                 stock_scrap = request.env['stock.scrap']
                 stock_production_lot = request.env['stock.production.lot']
-                obj_stock_production_lot = stock_production_lot.sudo().search(
-                    [('name', '=', post['params']['EPCCode'])])
+                stock_quant = request.env['stock.quant']
+                obj_stock_production_lot = stock_production_lot.sudo().search([('name', '=', post['params']['EPCCode'])])
+                obj_stock_quant = stock_quant.sudo().search([('lot_id', '=', obj_stock_production_lot.id)])
                 if obj_stock_production_lot:
                     obj_stock_scrap = stock_scrap.sudo().search([('lot_id', '=', obj_stock_production_lot.id)])
                     if not obj_stock_scrap:
-                        obj_scrap = obj_stock_scrap.sudo().create({'lot_id': obj_stock_production_lot.id,
-                                                                   'product_id': obj_stock_production_lot.product_id.id,
-                                                                   'product_uom_id': 1, 'date_done': datetime.now()})
+                        obj_scrap = obj_stock_scrap.sudo().create({
+                             'lot_id':  obj_stock_production_lot.id,
+                             'product_id':obj_stock_production_lot.product_id.id,
+                             'product_uom_id':1,'date_done':datetime.now(),
+                             'location_id':obj_stock_quant.location_id.id
+                        })
+                        obj_scrap.action_validate()
                         mensaje_correcto = {
                             "Token": as_token,
                             'idDescarte': obj_scrap.id,
@@ -71,7 +76,7 @@ class DescarteController(http.Controller):
                         }
                         return mensaje_correcto
                     else:
-                        return mensaje_error_existencia
+                       return mensaje_error_existencia
                 else:
                     return mensaje_error_existencia_lot
 
