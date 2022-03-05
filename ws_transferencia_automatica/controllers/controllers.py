@@ -60,7 +60,7 @@ class TransferenciaAutomaticaController(http.Controller):
                             'product_id': producto_id.id,
                             'description_picking': producto_id.name,
                             'quantity_done': 1,
-                            'lot_ids': [production_lot_obj.id],
+                            'lot_ids': [(production_lot_obj.id)],
                             'product_uom':1,
                             'location_id':obj_stock_quant.location_id.id,
                             'location_dest_id':location_id.id,
