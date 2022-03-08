@@ -7,6 +7,7 @@ from datetime import datetime
 from bs4 import BeautifulSoup
 import json
 import sys
+import base64
 import uuid
 from odoo import http
 from odoo.http import request, Response
@@ -68,6 +69,12 @@ class OdooController(http.Controller):
                 }
 
                 domain = []
+                data = {
+                    'epc_activo_existe': [],
+                    'epc_activo_faltante': [],
+                    'epc_activo_sobrante': [],
+                    'epc_activo_no_esta': []
+                }
                 location_parent_id = None
                 location_id = None
 
@@ -93,9 +100,11 @@ class OdooController(http.Controller):
 
                 # Fill list exixsts
                 for code in epcodes:
-                    quant_exists = quants.filtered(lambda x: x.lot_id.name == code and x.location_id.id == location_id.id).mapped(
+                    quant_exists = quants.filtered(
+                        lambda x: x.lot_id.name == code and x.location_id.id == location_id.id).mapped(
                         'lot_id.name')
-                    quant_faltantes = quants.filtered(lambda x: x.lot_id.name == code and x.location_id.id != location_id.id).mapped('lot_id.name')
+                    quant_faltantes = quants.filtered(
+                        lambda x: x.lot_id.name == code and x.location_id.id != location_id.id).mapped('lot_id.name')
                     quant_not_exists = quants.filtered(lambda x: x.lot_id.name == code)
 
                     if len(quant_exists):
@@ -105,8 +114,10 @@ class OdooController(http.Controller):
                     if not len(quant_not_exists):
                         epc_activo_no_esta.append(code)
 
-                epc_activo_sobrante = request.env['stock.quant'].sudo().search([('lot_id.name', 'not in', epcodes), ('location_id', '=', location_id.id)])
-                epc_activo_sobrante = epc_activo_sobrante.filtered(lambda x: x.available_quantity > 0).mapped('lot_id.name')
+                epc_activo_sobrante = request.env['stock.quant'].sudo().search(
+                    [('lot_id.name', 'not in', epcodes), ('location_id', '=', location_id.id)])
+                epc_activo_sobrante = epc_activo_sobrante.filtered(lambda x: x.available_quantity > 0).mapped(
+                    'lot_id.name')
 
                 for item in epc_activo_existe:
                     vals['detalleActivos'].append({
@@ -114,6 +125,7 @@ class OdooController(http.Controller):
                         'codigo': '0',
                         'mensaje': MESSAGES['0'],
                     })
+                    data['epc_activo_existe'].append(item)
 
                 for item in epc_activo_faltante:
                     vals['detalleActivos'].append({
@@ -121,18 +133,57 @@ class OdooController(http.Controller):
                         'codigo': '1',
                         'mensaje': MESSAGES['1'],
                     })
+                    data['epc_activo_faltante'].append(item)
+
                 for item in epc_activo_sobrante:
                     vals['detalleActivos'].append({
                         'EPCCode': item,
                         'codigo': '2',
                         'mensaje': MESSAGES['2'],
                     })
+                    data['epc_activo_sobrante'].append(item)
+
                 for item in epc_activo_no_esta:
                     vals['detalleActivos'].append({
                         'EPCCode': item,
                         'codigo': '9',
                         'mensaje': MESSAGES['9'],
                     })
+                    data['epc_activo_no_esta'].append(item)
+
+                data['id_conciliacion'] = ''
+                data['fecha'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                data['ubicacion'] = post['ubicacion']
+                data['user'] = post['user']
+                datas = {
+                    'data': data
+                }
+
+                user = request.env['res.users'].sudo().search([('name', '=', post['user'])], limit=1)
+                if user:
+                    report_template_id = request.env.ref(
+                        'ws_activos_conciliation.report_assets_conciliation_pdf_action').sudo()._render_qweb_pdf(
+                        res_ids=quants.ids, data=datas)
+
+                    data_record = base64.b64encode(report_template_id[0])
+                    ir_values = {
+                        'name': 'Reporte de Conciliacion',
+                        'type': 'binary',
+                        'datas': data_record,
+                        'store_fname': data_record,
+                        'mimetype': 'application/x-pdf',
+                    }
+                    data_id = request.env['ir.attachment'].sudo().create(ir_values)
+                    # create a mail_mail based on values, without attachments
+                    company = request.env['res.company'].sudo().search([], limit=1)
+                    mail_values = {
+                        'subject': "%s" % ('Reporte de Conciliacion'),
+                        'email_from': company.partner_id.email_formatted,
+                        'email_to': user.partner_id.email_formatted,
+                        'attachment_ids': [(6, 0, [data_id.id])],
+                    }
+                    mail = request.env['mail.mail'].sudo().create(mail_values)
+                    mail.send(raise_exception=False)
 
                 return vals
 
