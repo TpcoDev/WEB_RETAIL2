@@ -175,7 +175,7 @@ class OdooController(http.Controller):
                     }
                     data_id = request.env['ir.attachment'].sudo().create(ir_values)
                     # create a mail_mail based on values, without attachments
-                    company = request.env['res.company'].sudo().search([], limit=1)
+                    company = request.env['res.company'].sudo().search([], order='id asc', limit=1)
                     mail_values = {
                         'subject': "%s" % ('Reporte de Conciliacion'),
                         'email_from': company.partner_id.email_formatted,

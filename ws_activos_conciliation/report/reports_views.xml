@@ -9,10 +9,10 @@
                         <div class="page">
                             <h1>Reporte de Conciliacion</h1>
 
-                            <h3>Id Conciliacion: <span t-esc="data['id_conciliacion']"/></h3>
-                            <h3>Fecha Operación: <span t-esc="data['fecha']"/></h3>
-                            <h3>Ubicación Consultada: <span t-esc="data['ubicacion']"/></h3>
-                            <h3>Solicitada por: <span t-esc="data['user']"/></h3>
+                            <h6>Id Conciliacion: <span t-esc="data['id_conciliacion']"/></h6>
+                            <h6>Fecha Operación: <span t-esc="data['fecha']"/></h6>
+                            <h6>Ubicación Consultada: <span t-esc="data['ubicacion']"/></h6>
+                            <h6>Solicitada por: <span t-esc="data['user']"/></h6>
 
                             <table class="table table-sm table-bordered">
                                 <thead>
@@ -35,7 +35,7 @@
                             <table class="table table-sm table-bordered">
                                 <thead>
                                     <tr>
-                                        <th><strong> Activo faltante en Ubicación consultada"</strong></th>
+                                        <th><strong> Activo faltante en Ubicación consultada</strong></th>
                                     </tr>
                                 </thead>
                                 <tbody>
