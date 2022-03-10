@@ -6,7 +6,7 @@
 
     'author': "TPCO",
     'website': "http://www.tpco.com",
-    'version': '14.20210126',
+    'version': '14.20220310',
 
     # any module necessary for this one to work correctly
 
