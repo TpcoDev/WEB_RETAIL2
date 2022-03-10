@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <record id="hr_equipment_view_form_inherit" model="ir.ui.view">
+            <field name="name">equipment.form</field>
+            <field name="model">maintenance.equipment</field>
+            <field name="inherit_id" ref="maintenance.hr_equipment_view_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//label[@for='name']" position="before">
+                    <group>
+                        <field name='product_template_id' attrs="{'invisible': [('creado', '=', True)]}"/>
+                        <field name='creado' invisible = "1"/>
+                    </group>
+
+                </xpath>
+<!--                <field name='name' attrs="{'invisible': [('creado', '=', True)]}" />-->
+            </field>
+        </record>
+
+    </data>
+</odoo>
