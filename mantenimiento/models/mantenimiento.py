@@ -20,7 +20,10 @@ class MaintenanceEquipment(models.Model):
         self.effective_date =self.stock_production_lot_id.create_date
         stock_quant_obj = self.env['stock.quant'].search([('lot_id','=',self.stock_production_lot_id.id)])
         if stock_quant_obj:
-            self.location = stock_quant_obj.location_id[1].name
+            if len(stock_quant_obj)>1:
+                self.location = stock_quant_obj.location_id[1].name
+            else:
+                self.location = stock_quant_obj.location_id[0].name
         self.technician_user_id =self.env.user.id
 
    
