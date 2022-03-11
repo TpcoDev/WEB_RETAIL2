@@ -23,16 +23,7 @@ class MaintenanceEquipment(models.Model):
             self.location = stock_quant_obj.location_id[1].name
         self.technician_user_id =self.env.user.id
 
-    # @api.depends('creado')
-    # def _compute_name_readonly(self):
-    #     if self.creado:
-    #         self.name_readonly = True
-    #     # event_lines = self.filtered(lambda line: line.event_id)
-    #     # event_lines.update({'product_uom_readonly': True})
-    #     # super(SaleOrderLine, self - event_lines)._compute_product_uom_readonly()
-
-
-
+   
     stock_production_lot_id = fields.Many2one('stock.production.lot', string='Producto', required=True)
     creado = fields.Boolean()
 
