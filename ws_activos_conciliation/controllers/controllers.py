@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from odoo import SUPERUSER_ID
 from odoo.tools.translate import _
 from odoo import http
 from odoo.http import request
@@ -55,7 +56,7 @@ class OdooController(http.Controller):
                 return mensaje_error
 
             user_id = request.env["res.users.apikeys"]._check_credentials(scope="rpc", key=myapikey)
-            request.uid = user_id
+            request.uid = user_id or SUPERUSER_ID
 
             if user_id and post['params']:
                 post = post['params']
@@ -196,7 +197,7 @@ class OdooController(http.Controller):
                         'author_id': user_admin.partner_id.id,
                         'state': 'outgoing',
                     }
-                    mail = request.env['mail.mail'].sudo().create(mail_values)
+                    mail = request.env(user=user_id)['mail.mail'].sudo().create(mail_values)
                     mail.send(raise_exception=False)
 
                 return vals
