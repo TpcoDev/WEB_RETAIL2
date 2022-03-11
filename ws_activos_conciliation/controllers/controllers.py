@@ -57,7 +57,7 @@ class OdooController(http.Controller):
             user_id = request.env["res.users.apikeys"]._check_credentials(scope="rpc", key=myapikey)
             request.uid = user_id
 
-            if post['params']:
+            if user_id and post['params']:
                 post = post['params']
                 vals = {
                     'idConciliacion': '',
@@ -155,6 +155,12 @@ class OdooController(http.Controller):
                 data['fecha'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                 data['ubicacion'] = post['ubicacion']
                 data['user'] = post['user']
+
+                data['resumen_epc_activo_existe'] = len(epc_activo_existe)
+                data['resumen_epc_activo_faltante'] = len(epc_activo_faltante)
+                data['resumen_epc_activo_sobrante'] = len(epc_activo_sobrante)
+                data['resumen_epc_activo_no_esta'] = len(epc_activo_no_esta)
+
                 datas = {
                     'data': data
                 }
@@ -166,8 +172,9 @@ class OdooController(http.Controller):
                         res_ids=quants.ids, data=datas)
 
                     data_record = base64.b64encode(report_template_id[0])
+                    date_str = datetime.now().strftime('%Y-%m-%d-%H:%M:%S')
                     ir_values = {
-                        'name': 'Reporte de Conciliacion',
+                        'name': f'rep_conciliacion_{date_str}_{post["ubicacion"]}    ',
                         'type': 'binary',
                         'datas': data_record,
                         'store_fname': data_record,
@@ -176,14 +183,18 @@ class OdooController(http.Controller):
                     data_id = request.env['ir.attachment'].sudo().create(ir_values)
                     # create a mail_mail based on values, without attachments
                     company = request.env['res.company'].sudo().search([], order='id asc', limit=1)
+                    user_admin = request.env['res.users'].sudo().browse(user_id)
 
-                    email_to = request.env['res.partner'].sudo().search([('email_remitentes', '=', True), ('email', '!=', False)])
-
+                    email_to = request.env['res.partner'].sudo().search(
+                        [('email_remitentes', '=', True), ('email', '!=', False)]).mapped('email')
+                    email_to = "".join(email_to)
                     mail_values = {
                         'subject': "%s" % ('Reporte de Conciliacion'),
-                        'email_from': company.partner_id.email_formatted,
-                        'email_to': email_to.mapped('email'),
+                        'email_from': user_admin.partner_id.email_formatted or 'admin@odoo.com',
+                        'email_to': email_to,
                         'attachment_ids': [(6, 0, [data_id.id])],
+                        'author_id': user_admin.partner_id.id,
+                        'state': 'outgoing',
                     }
                     mail = request.env['mail.mail'].sudo().create(mail_values)
                     mail.send(raise_exception=False)
