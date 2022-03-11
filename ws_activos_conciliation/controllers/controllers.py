@@ -200,6 +200,14 @@ class OdooController(http.Controller):
                     mail.send(raise_exception=False)
 
                 return vals
+            else:
+                mensaje_error = {
+                    "Token": as_token,
+                    "RespCode": -5,
+                    "RespMessage": "Rechazado: Autenticación fallida"
+                }
+                return mensaje_error
+
 
         except Exception as e:
             mensaje_error = {
