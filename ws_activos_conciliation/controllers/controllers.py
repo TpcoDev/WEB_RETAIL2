@@ -169,7 +169,7 @@ class OdooController(http.Controller):
                 if user:
                     report_template_id = request.env.ref(
                         'ws_activos_conciliation.report_assets_conciliation_pdf_action').sudo()._render_qweb_pdf(
-                        res_ids=quants.ids, data=datas)
+                        res_ids=quants.ids[0], data=datas)
 
                     data_record = base64.b64encode(report_template_id[0])
                     date_str = datetime.now().strftime('%Y-%m-%d-%H:%M:%S')
