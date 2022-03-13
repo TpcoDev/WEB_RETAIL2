@@ -6,6 +6,7 @@ from odoo.http import request, Response
 import jsonschema
 from jsonschema import validate
 import json
+import datetime
 
 
 class EnrolamientoController(http.Controller):
@@ -146,6 +147,32 @@ class EnrolamientoController(http.Controller):
                             })
                             quant_id2.write({'lot_id': production_lot_nuevo.id})
 
+                            request.env['stock.move.line'].sudo().create({
+                               'date':datetime.datetime.now(),
+                               'reference':'Cantidad de producto actualizada',
+                               'product_id': product_tmpl_nuevo.id,
+                               'lot_id': production_lot_nuevo.id,
+                               'location_id': 14,
+                               'location_dest_id': location_id.id,
+                               'qty_done':1,
+                               'state': 'done',
+                               'company_id': request.env.user.company_id.id,
+                               'product_uom_id': 1
+                            })
+                            request.env.cr.commit()
+                            request.env['stock.move'].sudo().create({
+                                'date': datetime.datetime.now(),
+                                'name': 'Cantidad de producto actualizada',
+                                'reference': 'Cantidad de producto actualizada',
+                                'product_id': product_tmpl_nuevo.id,
+                                'location_id': 14,
+                                'location_dest_id': location_id.id,
+                                'state': 'done',
+                                'company_id': request.env.user.company_id.id,
+                                'product_uom': 1,
+                                'product_uom_qty': 1
+                            })
+                            request.env.cr.commit()
                         return mensaje_correcto
 
 
@@ -196,6 +223,33 @@ class EnrolamientoController(http.Controller):
                                 'lot_id': production_lot_nuevo.id
                             })
                             quant_id2.write({'lot_id': production_lot_nuevo.id})
+
+                            request.env['stock.move.line'].sudo().create({
+                                'date': datetime.datetime.now(),
+                                'reference': 'Cantidad de producto actualizada',
+                                'product_id': product_tmpl_nuevo.id,
+                                'lot_id': production_lot_nuevo.id,
+                                'location_id': 14,
+                                'location_dest_id': location_id.id,
+                                'qty_done': 1,
+                                'state': 'done',
+                                'company_id': request.env.user.company_id.id,
+                                'product_uom_id': 1
+                            })
+                            request.env.cr.commit()
+                            request.env['stock.move'].sudo().create({
+                                'date': datetime.datetime.now(),
+                                'name': 'Cantidad de producto actualizada',
+                                'reference': 'Cantidad de producto actualizada',
+                                'product_id': product_tmpl_nuevo.id,
+                                'location_id': 14,
+                                'location_dest_id': location_id.id,
+                                'state': 'done',
+                                'company_id': request.env.user.company_id.id,
+                                'product_uom': 1,
+                                'product_uom_qty': 1
+                            })
+                            request.env.cr.commit()
 
                         return mensaje_correcto
 

@@ -23,7 +23,7 @@ class MaintenanceEquipment(models.Model):
             self.location = stock_quant_obj.location_id[1].name
         self.technician_user_id =self.env.user.id
 
-   
+
     stock_production_lot_id = fields.Many2one('stock.production.lot', string='Producto', required=True)
     creado = fields.Boolean()
 
