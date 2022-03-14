@@ -157,7 +157,8 @@ class EnrolamientoController(http.Controller):
                                'state': 'done',
                                'company_id': request.env.user.company_id.id,
                                'product_uom_id': 1,
-                               'move_id': stock_move_nuevo.id
+                               'move_id': stock_move_nuevo.id,
+                               'reference': 'Inv. Adj.: Inventory'
                             })
                             request.env.cr.commit()
 
@@ -220,7 +221,8 @@ class EnrolamientoController(http.Controller):
                                 'state': 'done',
                                 'company_id': request.env.user.company_id.id,
                                 'product_uom_id': 1,
-                                'move_id': stock_move_nuevo.id
+                                'move_id': stock_move_nuevo.id,
+                                'reference': 'Inv. Adj.: Inventory'
                             })
                             request.env.cr.commit()
 

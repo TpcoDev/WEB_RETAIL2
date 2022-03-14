@@ -21,9 +21,9 @@ class MaintenanceEquipment(models.Model):
         stock_quant_obj = self.env['stock.quant'].search([('lot_id','=',self.stock_production_lot_id.id)])
         if stock_quant_obj:
             if len(stock_quant_obj)>1:
-                self.location = stock_quant_obj.location_id[1].name
+                self.location = stock_quant_obj.location_id[1].complete_name
             else:
-                self.location = stock_quant_obj.location_id[0].name
+                self.location = stock_quant_obj.location_id[0].complete_name
         self.technician_user_id =self.env.user.id
 
 
