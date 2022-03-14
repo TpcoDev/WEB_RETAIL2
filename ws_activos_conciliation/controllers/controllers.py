@@ -188,7 +188,7 @@ class OdooController(http.Controller):
 
                     email_to = request.env['res.partner'].sudo().search(
                         [('email_remitentes', '=', True), ('email', '!=', False)]).mapped('email')
-                    email_to = "".join(email_to)
+                    email_to = ",".join(email_to)
                     mail_values = {
                         'subject': "%s" % ('Reporte de Conciliacion'),
                         'email_from': user_admin.partner_id.email_formatted or 'admin@odoo.com',
