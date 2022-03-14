@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 {
-    'name': "Mantenimiento",
+    'name': "Mantenimiento-Inventario",
     'description': """
            """,
 
