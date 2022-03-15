@@ -18,17 +18,6 @@ class TransferenciaAutomaticaController(http.Controller):
         res = {}
         as_token = uuid.uuid4().hex
 
-        mensaje_error = {
-            "Token": as_token,
-            "RespCode": -1,
-            "RespMessage": "Error de conexión"
-        }
-        mensaje_correcto = {
-            "Token": as_token,
-            "RespCode": 0,
-            "RespMessage": "Activo existe"
-        }
-
         try:
             myapikey = request.httprequest.headers.get("Authorization")
             if not myapikey:
@@ -55,31 +44,23 @@ class TransferenciaAutomaticaController(http.Controller):
                 detalleActivos = []
                 for detalle in post['params']['detalleActivos']:
                     production_lot_obj = production_lot.sudo().search([('name', '=', detalle['EPCCode'])], limit=1)
-                    obj_stock_quant = stock_quant.sudo().search([('lot_id', '=', production_lot_obj.id)], limit=1)
+                    obj_stock_quant = stock_quant.sudo().search([('lot_id', '=', production_lot_obj.id),('location_id', '=', location_parent_id.id)], limit=1)
                     if production_lot_obj:
                         producto_id = production_lot_obj.product_id
+
+                        move_line_ids = [(5, 0, 0)]
+                        move_line_ids.append((0, 0, {'product_id': producto_id.id,'location_id':obj_stock_quant.location_id.id,'location_dest_id':location_id.id,'lot_id': production_lot_obj.id,'qty_done':1,'product_uom_id': 1,}))
+
+
                         stock_picking_nuevo = stock_picking.sudo().create({
                             'product_id': producto_id.id,
                             'picking_type_id': stock_picking_type_obj.id,
                             'location_id': location_parent_id.id,
                             'location_dest_id': location_id.id,
+                            'move_line_ids_without_package': move_line_ids
                         })
-                        # request.env.cr.commit()
-                        stock_move.create({
-                            'picking_id': stock_picking_nuevo.id,
-                            'name': producto_id.name,
-                            'product_id': producto_id.id,
-                            'description_picking': producto_id.name,
-                            'quantity_done': 1,
-                            'lot_ids': [(production_lot_obj.id)],
-                            'product_uom': 1,
-                            'location_id': obj_stock_quant.location_id.id,
-                            'location_dest_id': location_id.id,
-                            'date': datetime.datetime.now(),
-                            'company_id': 1,
-                            'product_uom_qty': 1,
-                        })
-                        # request.env.cr.commit()
+                        request.env.cr.commit()
+
                         stock_picking_nuevo.action_confirm()
                         stock_picking_nuevo.button_validate()
 
@@ -103,13 +84,8 @@ class TransferenciaAutomaticaController(http.Controller):
                     "user": post['params']['user'],
                     "detalleActivos": detalleActivos
                 }
-            else:
-                mensaje_error = {
-                    "Token": as_token,
-                    "RespCode": -5,
-                    "RespMessage": "Rechazado: Autenticación fallida"
-                }
-                return mensaje_error
+
+
 
 
         except Exception as e:
