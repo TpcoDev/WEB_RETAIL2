@@ -3,8 +3,6 @@
 import uuid
 from odoo import http
 from odoo.http import request, Response
-import jsonschema
-from jsonschema import validate
 import json
 import datetime
 
@@ -17,6 +15,11 @@ class TransferenciaAutomaticaController(http.Controller):
         post = json.loads(request.httprequest.data)
         res = {}
         as_token = uuid.uuid4().hex
+        mensaje_error = {
+            "Token": as_token,
+            "RespCode": -1,
+            "RespMessage": "Error de conexión"
+        }
 
         try:
             myapikey = request.httprequest.headers.get("Authorization")
