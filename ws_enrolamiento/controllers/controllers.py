@@ -7,7 +7,7 @@ import jsonschema
 from jsonschema import validate
 import json
 import datetime
-
+import base64
 
 class EnrolamientoController(http.Controller):
 
@@ -114,7 +114,8 @@ class EnrolamientoController(http.Controller):
                             'tracking': 'serial',
                             'purchase_ok': True,
                             'sale_ok': True,
-                            'type': 'product'
+                            'type': 'product',
+                            'image_1920': base64.b64encode(detalle['Imagen'])
 
                         })
                         request.env.cr.commit()
@@ -181,7 +182,8 @@ class EnrolamientoController(http.Controller):
                             'tracking': 'serial',
                             'purchase_ok': True,
                             'sale_ok': True,
-                            'type': 'product'
+                            'type': 'product',
+                            'image_1920': base64.b64encode(detalle['Imagen'])
                         })
 
                         for epc in detalle['DetalleEpc']:
